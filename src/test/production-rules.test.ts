@@ -9,7 +9,7 @@ function project(): Project {
 }
 function allDone(): Project {
   let p = project();
-  for (const s of ["script", "character", "animation", "editing", "thumbnail"] as const) p = updateStage(p, s, { status: "done" }, at);
+  for (const s of ["script", "character", "animation", "voice", "editing", "thumbnail"] as const) p = updateStage(p, s, { status: "done" }, at);
   return p;
 }
 

@@ -5,6 +5,7 @@ export const STAGE_ORDER: StageKey[] = [
   "script",
   "character",
   "animation",
+  "voice",
   "editing",
   "thumbnail",
   "review",
@@ -113,3 +114,26 @@ export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
   approved: "অনুমোদিত",
   failed: "ব্যর্থ",
 };
+
+/**
+ * Bring a stored project up to the current stage list (older records lack
+ * newer stages such as "voice"). An approval that no longer matches "every
+ * production stage done" is withdrawn instead of silently kept.
+ */
+export function normalizeProject(project: Project): Project {
+  const stages = project.stages ?? ({} as Project["stages"]);
+  const missing = STAGE_ORDER.filter((k) => !stages[k]);
+  const approval = project.approval ?? INITIAL_APPROVAL;
+  const allDone = PRODUCTION_STAGES.every((k) => stages[k]?.status === "done");
+  const staleApproval = approval.approved && !allDone;
+  if (missing.length === 0 && !staleApproval && project.approval) return project;
+
+  const nextStages = { ...stages };
+  for (const k of missing) nextStages[k] = { status: "not_started", note: "", updatedAt: project.updatedAt };
+  let nextApproval = approval;
+  if (staleApproval) {
+    nextApproval = { ...INITIAL_APPROVAL, note: approval.note };
+    nextStages.review = { ...nextStages.review, status: "not_started" };
+  }
+  return { ...project, stages: nextStages, approval: nextApproval };
+}

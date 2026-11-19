@@ -24,6 +24,7 @@ export const STAGE_LABELS: Record<StageKey, string> = {
   script: "স্ক্রিপ্ট",
   character: "চরিত্র",
   animation: "অ্যানিমেশন",
+  voice: "ভয়েস",
   editing: "এডিটিং",
   thumbnail: "থাম্বনেইল",
   review: "চূড়ান্ত রিভিউ",

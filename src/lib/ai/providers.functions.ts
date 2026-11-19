@@ -22,7 +22,7 @@ export interface ProviderStatus {
 
 export const getProviderStatus = createServerFn({ method: "GET" }).handler(
   async (): Promise<ProviderStatus[]> => {
-    const ids: ProviderSlotId[] = ["text", "image", "video", "editing", "publishing"];
+    const ids: ProviderSlotId[] = ["text", "image", "video", "voice", "editing", "publishing"];
     return ids.map((id) => ({ id, configured: id === "text" ? Boolean(adapters.text) : false }));
   },
 );

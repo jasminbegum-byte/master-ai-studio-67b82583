@@ -1,3 +1,5 @@
+import { normalizeProject } from "@/lib/domain/production";
+
 import { readKey, removeKey, useStoredValue, writeKey } from "./local-store";
 import type {
   AnimationSpec,
@@ -20,12 +22,26 @@ export interface Collection<T extends { id: string }> {
   clear: () => void;
 }
 
-function createCollection<T extends { id: string }>(key: string): Collection<T> {
+function createCollection<T extends { id: string }>(
+  key: string,
+  normalize?: (item: T) => T,
+): Collection<T> {
   const EMPTY: T[] = [];
-  const getAll = () => readKey<T[]>(key, EMPTY);
+  // Memoised per stored array so subscribers keep a stable reference.
+  const memo = new WeakMap<T[], T[]>();
+  const norm = (list: T[]): T[] => {
+    if (!normalize || !Array.isArray(list)) return list;
+    let out = memo.get(list);
+    if (!out) {
+      out = list.map(normalize);
+      memo.set(list, out);
+    }
+    return out;
+  };
+  const getAll = () => norm(readKey<T[]>(key, EMPTY));
   return {
     key,
-    useAll: () => useStoredValue<T[]>(key, EMPTY),
+    useAll: () => norm(useStoredValue<T[]>(key, EMPTY)),
     getAll,
     get: (id) => getAll().find((i) => i.id === id),
     upsert: (item) => {
@@ -40,7 +56,7 @@ function createCollection<T extends { id: string }>(key: string): Collection<T> 
   };
 }
 
-export const projects = createCollection<Project>("projects");
+export const projects = createCollection<Project>("projects", normalizeProject);
 export const scripts = createCollection<Script>("scripts");
 export const characters = createCollection<Character>("characters");
 export const animations = createCollection<AnimationSpec>("animations");

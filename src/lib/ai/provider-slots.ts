@@ -2,7 +2,7 @@
  * Provider slots the studio can later connect. Browser-safe metadata only —
  * credentials must live in server-side secrets and are never read in the client.
  */
-export type ProviderSlotId = "text" | "image" | "video" | "editing" | "publishing";
+export type ProviderSlotId = "text" | "image" | "video" | "voice" | "editing" | "publishing";
 
 export interface ProviderSlot {
   id: ProviderSlotId;
@@ -29,6 +29,12 @@ export const PROVIDER_SLOTS: ProviderSlot[] = [
     title: "ভিডিও / অ্যানিমেশন রেন্ডার",
     usedBy: "অ্যানিমেশন ইঞ্জিন (Code Animation রেন্ডার)",
     requirement: "কোড-রেন্ডার সার্ভিস বা ভিডিও মডেল; Google Flow আলাদাভাবে Flow-এর সাইটে চলে",
+  },
+  {
+    id: "voice",
+    title: "ভয়েস / টেক্সট-টু-স্পিচ",
+    usedBy: "মাস্টার কন্ট্রোলারের ভয়েস ধাপ",
+    requirement: "একটি ভয়েস (TTS) প্রোভাইডার ও সার্ভার-সাইড সিক্রেট কী",
   },
   {
     id: "editing",

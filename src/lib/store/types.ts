@@ -1,6 +1,13 @@
 /** Shared data model for locally persisted studio records. */
 
-export type StageKey = "script" | "character" | "animation" | "editing" | "thumbnail" | "review";
+export type StageKey =
+  | "script"
+  | "character"
+  | "animation"
+  | "voice"
+  | "editing"
+  | "thumbnail"
+  | "review";
 
 export type StageStatus =
   | "not_started"
@@ -22,6 +29,15 @@ export interface Approval {
   note: string;
 }
 
+/** What the user asked the Master Controller for. Stored on the project it created. */
+export interface ProductionBrief {
+  instruction: string;
+  videoType: string;
+  targetDurationSec: number;
+  extraInstructions: string;
+  createdAt: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -32,6 +48,8 @@ export interface Project {
   updatedAt: string;
   stages: Record<StageKey, StageState>;
   approval: Approval;
+  /** Present only on projects created from the Master Controller. */
+  brief?: ProductionBrief;
 }
 
 export type Platform = "facebook_reels" | "youtube_shorts" | "instagram_reels";

@@ -10,33 +10,141 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnimationRouteImport } from './routes/animation'
+import { Route as AssistantRouteImport } from './routes/assistant'
+import { Route as CharactersRouteImport } from './routes/characters'
+import { Route as EditingRouteImport } from './routes/editing'
+import { Route as MonitorRouteImport } from './routes/monitor'
+import { Route as ScriptRouteImport } from './routes/script'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ThumbnailRouteImport } from './routes/thumbnail'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnimationRoute = AnimationRouteImport.update({
+  id: '/animation',
+  path: '/animation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssistantRoute = AssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CharactersRoute = CharactersRouteImport.update({
+  id: '/characters',
+  path: '/characters',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EditingRoute = EditingRouteImport.update({
+  id: '/editing',
+  path: '/editing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitorRoute = MonitorRouteImport.update({
+  id: '/monitor',
+  path: '/monitor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScriptRoute = ScriptRouteImport.update({
+  id: '/script',
+  path: '/script',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ThumbnailRoute = ThumbnailRouteImport.update({
+  id: '/thumbnail',
+  path: '/thumbnail',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/animation': typeof AnimationRoute
+  '/assistant': typeof AssistantRoute
+  '/characters': typeof CharactersRoute
+  '/editing': typeof EditingRoute
+  '/monitor': typeof MonitorRoute
+  '/script': typeof ScriptRoute
+  '/settings': typeof SettingsRoute
+  '/thumbnail': typeof ThumbnailRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/animation': typeof AnimationRoute
+  '/assistant': typeof AssistantRoute
+  '/characters': typeof CharactersRoute
+  '/editing': typeof EditingRoute
+  '/monitor': typeof MonitorRoute
+  '/script': typeof ScriptRoute
+  '/settings': typeof SettingsRoute
+  '/thumbnail': typeof ThumbnailRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/animation': typeof AnimationRoute
+  '/assistant': typeof AssistantRoute
+  '/characters': typeof CharactersRoute
+  '/editing': typeof EditingRoute
+  '/monitor': typeof MonitorRoute
+  '/script': typeof ScriptRoute
+  '/settings': typeof SettingsRoute
+  '/thumbnail': typeof ThumbnailRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/animation'
+    | '/assistant'
+    | '/characters'
+    | '/editing'
+    | '/monitor'
+    | '/script'
+    | '/settings'
+    | '/thumbnail'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/animation'
+    | '/assistant'
+    | '/characters'
+    | '/editing'
+    | '/monitor'
+    | '/script'
+    | '/settings'
+    | '/thumbnail'
+  id:
+    | '__root__'
+    | '/'
+    | '/animation'
+    | '/assistant'
+    | '/characters'
+    | '/editing'
+    | '/monitor'
+    | '/script'
+    | '/settings'
+    | '/thumbnail'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnimationRoute: typeof AnimationRoute
+  AssistantRoute: typeof AssistantRoute
+  CharactersRoute: typeof CharactersRoute
+  EditingRoute: typeof EditingRoute
+  MonitorRoute: typeof MonitorRoute
+  ScriptRoute: typeof ScriptRoute
+  SettingsRoute: typeof SettingsRoute
+  ThumbnailRoute: typeof ThumbnailRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +156,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/animation': {
+      id: '/animation'
+      path: '/animation'
+      fullPath: '/animation'
+      preLoaderRoute: typeof AnimationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assistant': {
+      id: '/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AssistantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/characters': {
+      id: '/characters'
+      path: '/characters'
+      fullPath: '/characters'
+      preLoaderRoute: typeof CharactersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/editing': {
+      id: '/editing'
+      path: '/editing'
+      fullPath: '/editing'
+      preLoaderRoute: typeof EditingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitor': {
+      id: '/monitor'
+      path: '/monitor'
+      fullPath: '/monitor'
+      preLoaderRoute: typeof MonitorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/script': {
+      id: '/script'
+      path: '/script'
+      fullPath: '/script'
+      preLoaderRoute: typeof ScriptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/thumbnail': {
+      id: '/thumbnail'
+      path: '/thumbnail'
+      fullPath: '/thumbnail'
+      preLoaderRoute: typeof ThumbnailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnimationRoute: AnimationRoute,
+  AssistantRoute: AssistantRoute,
+  CharactersRoute: CharactersRoute,
+  EditingRoute: EditingRoute,
+  MonitorRoute: MonitorRoute,
+  ScriptRoute: ScriptRoute,
+  SettingsRoute: SettingsRoute,
+  ThumbnailRoute: ThumbnailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

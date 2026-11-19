@@ -105,8 +105,8 @@ function MonitorBody() {
   const filtered = filter === "all" ? sorted : sorted.filter((p) => deriveJobStatus(p) === filter);
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[20rem_1fr]">
-      <div className={cn("space-y-3", selected && "hidden lg:block")}>
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[20rem_minmax(0,1fr)]">
+      <div className={cn("min-w-0 space-y-3", selected && "hidden lg:block")}>
         <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="group" aria-label="স্ট্যাটাস ফিল্টার">
           {FILTERS.map((f) => (
             <button

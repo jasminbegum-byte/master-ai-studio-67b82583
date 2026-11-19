@@ -78,10 +78,14 @@ function DataControls() {
   async function importFile(file: File | undefined) {
     if (!file) return;
     const res = parseImportBundle(await file.text());
-    if (!res.ok) return toast.error(res.error);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    const data = res.bundle.data as unknown as Record<string, never[]>;
     safeSave(() => {
       for (const [k, c] of Object.entries(ALL_COLLECTIONS)) {
-        c.replaceAll((res.bundle.data as Record<string, never[]>)[k] ?? []);
+        c.replaceAll(data[k] ?? []);
       }
     }, "ডেটা ইমপোর্ট হয়েছে");
   }

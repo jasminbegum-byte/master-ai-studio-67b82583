@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, FilePlus2, Loader2, Pencil, ScrollText, Wand2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
 import { AgentAssistPanel } from "@/components/agents/AgentAssistPanel";

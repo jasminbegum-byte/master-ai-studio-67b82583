@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { ChipPicker } from "@/components/common/ChipPicker";
+import { AgentAssistPanel } from "@/components/agents/AgentAssistPanel";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
 import { EmptyState } from "@/components/common/EmptyState";
 import { FieldError } from "@/components/common/FieldError";
@@ -74,7 +75,7 @@ function ThumbBody() {
 
   return (
     <div className="space-y-5">
-      <NotConnectedNotice title="ইমেজ মডেল">ইমেজ মডেল সংযুক্ত নয়, তাই কোনো ছবি তৈরি হয় না। প্রম্পট ও ব্রিফ সংরক্ষণ কাজ করে।</NotConnectedNotice>
+      <NotConnectedNotice title="ইমেজ মডেল">ইমেজ মডেল সংযুক্ত নয়, তাই কোনো ছবি তৈরি হয় না। প্রম্পট ও ব্রিফ সংরক্ষণ কাজ করে।</NotConnectedNotice>\n      <AgentAssistPanel agentId="thumbnail" title="AI Thumbnail Agent" instruction={`এই থাম্বনেইল ব্রিফের জন্য আরও কার্যকর কনসেপ্ট, কম শব্দের বাংলা শিরোনাম এবং বিস্তারিত image prompt তৈরি করো: ${prompt}`} context={`স্টাইল: ${d.style}\\nমুড: ${d.mood}\\nঅনুপাত: ${d.aspectRatio}\\nঅতিরিক্ত নোট: ${d.extraNotes}`} />
       <form onSubmit={submit} noValidate>
         <Section title="থাম্বনেইল ব্রিফ">
           <div className="grid gap-5 lg:grid-cols-2">

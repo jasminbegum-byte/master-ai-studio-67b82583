@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, FilePlus2, Inbox, Lock, Send, Workflow } from "lucide-react";
+import { ArrowLeft, ArrowRight, FilePlus2, Inbox, Loader2, Lock, Send, Workflow, Wand2 } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
 
 import { ChipPicker } from "@/components/common/ChipPicker";
@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PROVIDER_SLOTS, type ProviderSlotId } from "@/lib/ai/provider-slots";
+import { runSpecialistAgent } from "@/lib/ai/providers.functions";
 import { useProviderStatus } from "@/lib/ai/use-provider-status";
 import {
   buildStagePlan,
@@ -344,6 +345,34 @@ function PlanView({ project }: { project: Project }) {
 
   const plan = buildStagePlan(project, { scripts: scriptList, characterNames, animationCount, editCount, thumbnailCount });
   const brief = project.brief;
+  const providerStatus = useProviderStatus();
+  const textConfigured = providerStatus.data?.find((item) => item.id === "text")?.configured === true;
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiPlan, setAiPlan] = useState("");
+  const [aiError, setAiError] = useState("");
+
+  async function generateAiPlan() {
+    if (!brief || aiBusy) return;
+    setAiBusy(true);
+    setAiError("");
+    setAiPlan("");
+    try {
+      const result = await runSpecialistAgent({
+        data: {
+          agentId: "master",
+          mode: "automatic",
+          instruction: "এই প্রোডাকশন ব্রিফকে বাস্তবসম্মতভাবে বিশেষজ্ঞ এজেন্টদের আলাদা কাজে ভাগ করো। প্রতিটি কাজের জন্য এজেন্ট, deliverable, প্রয়োজনীয় input, dependency, review checkpoint এবং পরবর্তী ধাপ দাও। যেসব মিডিয়া-জেনারেশন সংযোগ নেই, সেগুলোকে pending external integration হিসেবে দেখাও।\nপ্রজেক্ট: " + project.title + "\nমূল নির্দেশ: " + brief.instruction + "\nভিডিওর ধরন: " + brief.videoType + "\nপ্ল্যাটফর্ম: " + PLATFORM_LABELS[project.platform] + "\nদৈর্ঘ্য: " + brief.targetDurationSec + " সেকেন্ড\nঅতিরিক্ত নির্দেশ: " + (brief.extraInstructions || "নেই"),
+          context: "বর্তমান প্রোডাকশন স্ট্যাটাস: " + PRODUCTION_STAGES.map((stage) => STAGE_LABELS[stage] + ": " + project.stages[stage].status).join("; "),
+        },
+      });
+      if (result.ok) setAiPlan(result.reply);
+      else setAiError(result.message);
+    } catch {
+      setAiError("AI পরিকল্পনা তৈরি করা যায়নি। সংযোগ পরীক্ষা করুন।");
+    } finally {
+      setAiBusy(false);
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -397,6 +426,15 @@ function PlanView({ project }: { project: Project }) {
             }}
           />
         </div>
+      </Section>
+
+      <Section title="AI-চালিত মাস্টার পরিকল্পনা" description="সংরক্ষিত ব্রিফ ও বর্তমান স্ট্যাটাস দেখে AI এজেন্টদের কাজ ভাগ করে বিস্তারিত পরিকল্পনা তৈরি করবে।">
+        <Button type="button" onClick={generateAiPlan} disabled={!textConfigured || !brief || aiBusy}>
+          {aiBusy ? <Loader2 className="animate-spin" /> : <Wand2 />} {aiBusy ? "পরিকল্পনা তৈরি হচ্ছে…" : "AI দিয়ে কাজ ভাগ করো"}
+        </Button>
+        {aiError && <p role="alert" className="mt-3 text-sm text-destructive">{aiError}</p>}
+        {aiPlan && <Textarea className="mt-3 min-h-72" value={aiPlan} readOnly aria-label="AI মাস্টার পরিকল্পনা" />}
+        <p className="mt-2 text-xs text-muted-foreground">AI পরিকল্পনা তৈরি হলেই কোনো কাজ স্বয়ংক্রিয়ভাবে সম্পন্ন হয় না। প্রতিটি মিডিয়া আউটপুট আলাদাভাবে তৈরি ও পর্যালোচনা করতে হবে।</p>
       </Section>
 
       <section aria-labelledby="plan-heading" className="space-y-3">

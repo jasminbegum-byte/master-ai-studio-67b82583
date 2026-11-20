@@ -1,6 +1,6 @@
 /**
- * Provider slots the studio can later connect. Browser-safe metadata only —
- * credentials must live in server-side secrets and are never read in the client.
+ * Provider slots for Master AI Studio. Browser-safe metadata only —
+ * credentials must live in server-side environment secrets, never in the client.
  */
 export type ProviderSlotId = "text" | "image" | "video" | "voice" | "editing" | "publishing";
 
@@ -15,8 +15,8 @@ export const PROVIDER_SLOTS: ProviderSlot[] = [
   {
     id: "text",
     title: "টেক্সট AI (চ্যাট ও স্ক্রিপ্ট)",
-    usedBy: "মিনি AI অ্যাসিস্ট্যান্ট, স্ক্রিপ্ট এজেন্ট",
-    requirement: "একটি টেক্সট মডেল প্রোভাইডার ও সার্ভার-সাইড সিক্রেট কী",
+    usedBy: "মিনি AI অ্যাসিস্ট্যান্ট, মাস্টার কন্ট্রোলার ও স্ক্রিপ্ট এজেন্ট",
+    requirement: "Gemini API key সার্ভারের GEMINI_API_KEY environment secret-এ; মডেল GEMINI_MODEL দিয়ে বাছাইযোগ্য",
   },
   {
     id: "image",
@@ -33,7 +33,7 @@ export const PROVIDER_SLOTS: ProviderSlot[] = [
   {
     id: "voice",
     title: "ভয়েস / টেক্সট-টু-স্পিচ",
-    usedBy: "মাস্টার কন্ট্রোলারের ভয়েস ধাপ",
+    usedBy: "ভয়েস এজেন্ট",
     requirement: "একটি ভয়েস (TTS) প্রোভাইডার ও সার্ভার-সাইড সিক্রেট কী",
   },
   {

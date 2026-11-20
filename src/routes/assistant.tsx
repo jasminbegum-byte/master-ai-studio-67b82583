@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { askAssistant } from "@/lib/ai/providers.functions";
+import { useProviderStatus } from "@/lib/ai/use-provider-status";
 import { formatBnDate } from "@/lib/domain/labels";
 import { chat, newId, nowIso } from "@/lib/store/collections";
 import { safeSave } from "@/lib/store/safe-save";
@@ -19,9 +20,9 @@ export const Route = createFileRoute("/assistant")({
   head: () => ({
     meta: [
       { title: "মিনি AI অ্যাসিস্ট্যান্ট — Master AI Studio" },
-      { name: "description", content: "বাংলায় চ্যাট — বার্তা এই ডিভাইসে সংরক্ষিত থাকে।" },
+      { name: "description", content: "বাংলায় AI চ্যাট — বার্তা এই ডিভাইসে সংরক্ষিত থাকে।" },
       { property: "og:title", content: "মিনি AI অ্যাসিস্ট্যান্ট — Master AI Studio" },
-      { property: "og:description", content: "বাংলা চ্যাট ইন্টারফেস, প্রোভাইডার সংযোগের অপেক্ষায়।" },
+      { property: "og:description", content: "বাংলা AI চ্যাট।" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -42,6 +43,8 @@ function AssistantPage() {
 
 function ChatBody() {
   const messages = [...chat.useAll()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const providerStatus = useProviderStatus();
+  const textConfigured = providerStatus.data?.find((item) => item.id === "text")?.configured === true;
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -65,11 +68,17 @@ function ChatBody() {
           chat.upsert({ ...msg, status: "answered" });
           chat.upsert({ id: newId(), role: "assistant", content: res.reply, status: "answered", createdAt: nowIso() });
         });
-      } else if (res.code === "provider_error") {
-        safeSave(() => chat.upsert({ ...msg, status: "error" }));
+      } else {
+        safeSave(() => {
+          chat.upsert({ ...msg, status: "error" });
+          chat.upsert({ id: newId(), role: "assistant", content: res.message, status: "error", createdAt: nowIso() });
+        });
       }
     } catch {
-      safeSave(() => chat.upsert({ ...msg, status: "error" }));
+      safeSave(() => {
+        chat.upsert({ ...msg, status: "error" });
+        chat.upsert({ id: newId(), role: "assistant", content: "AI সার্ভারে যোগাযোগ করা যায়নি। সংযোগ ও সার্ভার লগ পরীক্ষা করুন।", status: "error", createdAt: nowIso() });
+      });
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -78,9 +87,11 @@ function ChatBody() {
 
   return (
     <div className="space-y-4">
-      <NotConnectedNotice title="টেক্সট AI প্রোভাইডার">
-        কোনো AI প্রোভাইডার সংযুক্ত নেই, তাই অ্যাসিস্ট্যান্ট উত্তর দেয় না। আপনার বার্তা সংরক্ষিত থাকবে ও ‘উত্তরের অপেক্ষায়’ দেখাবে।
-      </NotConnectedNotice>
+      {!textConfigured && (
+        <NotConnectedNotice title="Gemini টেক্সট AI সংযোগ">
+          সার্ভারে GEMINI_API_KEY সেট না করা পর্যন্ত AI উত্তর তৈরি হবে না। কী-টি শুধু হোস্টিংয়ের server-side environment secrets-এ রাখতে হবে; ব্রাউজারে বা GitHub কোডে নয়।
+        </NotConnectedNotice>
+      )}
       <div className="studio-card flex min-h-[50vh] flex-col">
         <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite">
           {messages.length === 0 ? (
@@ -98,8 +109,8 @@ function ChatBody() {
                 </p>
                 <span className="mt-1 text-xs text-muted-foreground">
                   {formatBnDate(m.createdAt)}
-                  {m.status === "awaiting_provider" && " · উত্তরের অপেক্ষায় (প্রোভাইডার সংযুক্ত নয়)"}
-                  {m.status === "error" && " · পাঠানো যায়নি"}
+                  {m.status === "awaiting_provider" && " · AI উত্তরের অপেক্ষায়"}
+                  {m.status === "error" && " · সংযোগে সমস্যা"}
                 </span>
               </div>
             ))

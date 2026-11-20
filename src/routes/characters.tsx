@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { AgentAssistPanel } from "@/components/agents/AgentAssistPanel";
 import { EmptyState } from "@/components/common/EmptyState";
 import { FieldError } from "@/components/common/FieldError";
 import { HydrationGate } from "@/components/common/HydrationGate";
@@ -200,7 +201,7 @@ function CharacterForm({
   }
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-4">
+    <form onSubmit={submit} noValidate className="space-y-4">\n      <AgentAssistPanel agentId="character" title="AI Character Agent" instruction={`চরিত্রের নাম ${draft.name}। তার চেহারা, পোশাক, কণ্ঠ ও ধারাবাহিকতার জন্য উন্নত character bible তৈরি করো।`} context={`চেহারা: ${draft.visualDescription}\\nপোশাক: ${draft.clothing}\\nকণ্ঠ: ${draft.voiceNotes}\\nধারাবাহিকতা: ${draft.continuityNotes}`} />
       <div className="space-y-1.5">
         <Label htmlFor="ch-name">নাম *</Label>
         <Input id="ch-name" value={draft.name} onChange={(e) => set("name", e.target.value)} placeholder="যেমন: রাজু" />

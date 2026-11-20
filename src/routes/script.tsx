@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, FilePlus2, Pencil, ScrollText } from "lucide-react";
+import { Download, FilePlus2, Loader2, Pencil, ScrollText, Wand2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { AgentAssistPanel } from "@/components/agents/AgentAssistPanel";
 import { EmptyState } from "@/components/common/EmptyState";
 import { HydrationGate } from "@/components/common/HydrationGate";
 import { NotConnectedNotice } from "@/components/common/NotConnectedNotice";
@@ -12,7 +14,10 @@ import { Section } from "@/components/common/Section";
 import { emptyScript, ScriptEditor } from "@/components/script/ScriptEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { downloadText, safeFilename } from "@/lib/download";
+import { Textarea } from "@/components/ui/textarea";
+import { copyText, downloadText, safeFilename } from "@/lib/download";
+import { runSpecialistAgent } from "@/lib/ai/providers.functions";
+import { useProviderStatus } from "@/lib/ai/use-provider-status";
 import { formatBnDate, PLATFORM_LABELS, toBnDigits } from "@/lib/domain/labels";
 import { scriptToText } from "@/lib/domain/prompts";
 import { characters, scripts } from "@/lib/store/collections";
@@ -59,6 +64,32 @@ function ScriptBody() {
   const requested = requestedId ? scripts.get(requestedId) : undefined;
   const [editing, setEditing] = useState<Script>(() => requested ?? emptyScript());
   const [editorKey, setEditorKey] = useState(0);
+  const providerStatus = useProviderStatus();
+  const textConfigured = providerStatus.data?.find((item) => item.id === "text")?.configured === true;
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiOutput, setAiOutput] = useState("");
+  const [aiError, setAiError] = useState("");
+
+  async function generateWithAi() {
+    if (aiBusy) return;
+    setAiBusy(true);
+    setAiError("");
+    setAiOutput("");
+    try {
+      const result = await runSpecialistAgent({ data: {
+        agentId: "script",
+        mode: "automatic",
+        instruction: `এই ধারণার ভিত্তিতে সম্পূর্ণ দৃশ্যভিত্তিক বাংলা ভিডিও স্ক্রিপ্ট তৈরি করো। প্রতিটি দৃশ্যে সময়, লোকেশন, ভিজ্যুয়াল, চরিত্রের কাজ, সংলাপ/ভয়েসওভার এবং পরের দৃশ্যে যাওয়ার ধারাবাহিকতা দাও।\nশিরোনাম: ${editing.title}\nমূল ধারণা: ${editing.idea}\nভিডিও ধরন: ${editing.style}\nপ্ল্যাটফর্ম: ${editing.platform}\nসময়: ${editing.targetDurationSec} সেকেন্ড`,
+        context: charList.map((character) => `${character.name}: ${character.visualDescription}; পোশাক: ${character.clothing}; continuity: ${character.continuityNotes}`).join("\n"),
+      }});
+      if (result.ok) setAiOutput(result.reply);
+      else setAiError(result.message);
+    } catch {
+      setAiError("AI স্ক্রিপ্ট তৈরি করা যায়নি। সংযোগ পরীক্ষা করুন।");
+    } finally {
+      setAiBusy(false);
+    }
+  }
 
   function openEditor(s: Script) {
     setEditing(s);
@@ -69,10 +100,34 @@ function ScriptBody() {
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
       <div className="space-y-4">
-        <NotConnectedNotice title="AI স্ক্রিপ্ট জেনারেশন">
-          টেক্সট AI প্রোভাইডার যুক্ত না হওয়া পর্যন্ত এই এজেন্ট নিজে স্ক্রিপ্ট লেখে না। আপনি নিজে দৃশ্য লিখে
-          সংরক্ষণ করতে পারবেন; সংযোগের পরে এই খসড়াগুলোই AI-কে দেওয়া যাবে।
-        </NotConnectedNotice>
+        {!textConfigured && (
+          <NotConnectedNotice title="AI স্ক্রিপ্ট জেনারেশন">
+            Gemini সংযোগের জন্য সার্ভারে GEMINI_API_KEY secret সেট করুন। API key কখনো ব্রাউজারে বা GitHub-এ রাখবেন না।
+          </NotConnectedNotice>
+        )}
+        <Section title="AI স্ক্রিপ্ট সহায়তা" description="বর্তমান স্ক্রিপ্টের ধারণা ও চরিত্রের তথ্য ব্যবহার করে দৃশ্যভিত্তিক বাংলা খসড়া তৈরি করুন।">
+          <Button type="button" onClick={generateWithAi} disabled={!textConfigured || aiBusy || editing.idea.trim().length < 10}>
+            {aiBusy ? <Loader2 className="animate-spin" /> : <Wand2 />}
+            {aiBusy ? "স্ক্রিপ্ট তৈরি হচ্ছে…" : "AI দিয়ে স্ক্রিপ্ট তৈরি"}
+          </Button>
+          {aiError && <p role="alert" className="mt-3 text-sm text-destructive">{aiError}</p>}
+          {aiOutput && (
+            <div className="mt-3 space-y-2">
+              <Textarea value={aiOutput} readOnly rows={12} aria-label="AI তৈরি করা স্ক্রিপ্ট" />
+              <Button type="button" variant="studio" size="sm" onClick={async () => {
+                if (await copyText(aiOutput)) toast.success("স্ক্রিপ্ট কপি হয়েছে");
+                else toast.error("কপি করা যায়নি");
+              }}>স্ক্রিপ্ট কপি করুন</Button>
+              <p className="text-xs text-muted-foreground">এটি AI-তৈরি খসড়া। সংরক্ষণের আগে পড়ে সম্পাদনা করুন এবং Script Editor-এ দৃশ্য যোগ করুন।</p>
+            </div>
+          )}
+        </Section>
+        <AgentAssistPanel
+          agentId="voice"
+          title="AI Voice Agent"
+          instruction={`এই ভিডিওর জন্য স্বাভাবিক বাংলা ভয়েসওভার ও সংলাপ প্রস্তুত করো। শিরোনাম: ${editing.title}। ধারণা: ${editing.idea}। স্ক্রিপ্ট খসড়া: ${aiOutput || "এখনো AI স্ক্রিপ্ট তৈরি হয়নি"}। প্রতিটি দৃশ্যের জন্য speaker, dialogue, emotion, pause ও timing দাও।`}
+          context={charList.map((character) => `${character.name}: ${character.voiceNotes}`).join("\n")}
+        />
         {requestedId && !requested && (
           <p role="alert" className="rounded-lg border border-status-failed/40 bg-status-failed/10 p-3 text-sm text-foreground">
             অনুরোধ করা স্ক্রিপ্ট খসড়াটি পাওয়া যায়নি — হয়তো মুছে ফেলা হয়েছে। ডান দিকের তালিকা থেকে বাছুন বা নতুন লিখুন।

@@ -13,7 +13,7 @@ function getServerEnv(name: string): string | undefined {
 const geminiTextAdapter: TextAdapter | undefined = getServerEnv("GEMINI_API_KEY")
   ? async (messages) => {
       const apiKey = getServerEnv("GEMINI_API_KEY");
-      const model = getServerEnv("GEMINI_MODEL") || "gemini-2.5-flash";
+      const model = getServerEnv("GEMINI_MODEL") || "gemini-3.1-flash-lite";
       if (!apiKey) throw new Error("Gemini API key is missing");
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,

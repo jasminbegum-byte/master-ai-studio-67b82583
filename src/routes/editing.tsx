@@ -3,6 +3,7 @@ import { FileVideo, Pencil, Save, Scissors, Sparkles, Type, Upload, X } from "lu
 import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { AgentAssistPanel } from "@/components/agents/AgentAssistPanel";
 import { EmptyState } from "@/components/common/EmptyState";
 import { FieldError } from "@/components/common/FieldError";
 import { HydrationGate } from "@/components/common/HydrationGate";

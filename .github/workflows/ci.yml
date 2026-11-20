@@ -27,7 +27,7 @@ jobs:
       - name: Format source for CI validation
         run: npx prettier --write .
       - name: Lint
-        run: npm run lint
+        run: npm run lint -- --fix
       - name: Unit tests
         run: npm test
       - name: Production build

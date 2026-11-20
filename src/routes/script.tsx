@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, FilePlus2, Pencil, ScrollText } from "lucide-react";
+import { Download, FilePlus2, Loader2, Pencil, ScrollText, Wand2 } from "lucide-react";
 import { useState } from "react";
 
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
@@ -12,7 +12,10 @@ import { Section } from "@/components/common/Section";
 import { emptyScript, ScriptEditor } from "@/components/script/ScriptEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { downloadText, safeFilename } from "@/lib/download";
+import { Textarea } from "@/components/ui/textarea";
+import { copyText, downloadText, safeFilename } from "@/lib/download";
+import { runSpecialistAgent } from "@/lib/ai/providers.functions";
+import { useProviderStatus } from "@/lib/ai/use-provider-status";
 import { formatBnDate, PLATFORM_LABELS, toBnDigits } from "@/lib/domain/labels";
 import { scriptToText } from "@/lib/domain/prompts";
 import { characters, scripts } from "@/lib/store/collections";
@@ -59,6 +62,32 @@ function ScriptBody() {
   const requested = requestedId ? scripts.get(requestedId) : undefined;
   const [editing, setEditing] = useState<Script>(() => requested ?? emptyScript());
   const [editorKey, setEditorKey] = useState(0);
+  const providerStatus = useProviderStatus();
+  const textConfigured = providerStatus.data?.find((item) => item.id === "text")?.configured === true;
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiOutput, setAiOutput] = useState("");
+  const [aiError, setAiError] = useState("");
+
+  async function generateWithAi() {
+    if (aiBusy) return;
+    setAiBusy(true);
+    setAiError("");
+    setAiOutput("");
+    try {
+      const result = await runSpecialistAgent({ data: {
+        agentId: "script",
+        mode: "automatic",
+        instruction: `এই ধারণার ভিত্তিতে সম্পূর্ণ দৃশ্যভিত্তিক বাংলা ভিডিও স্ক্রিপ্ট তৈরি করো। প্রতিটি দৃশ্যে সময়, লোকেশন, ভিজ্যুয়াল, চরিত্রের কাজ, সংলাপ/ভয়েসওভার এবং পরের দৃশ্যে যাওয়ার ধারাবাহিকতা দাও।\nশিরোনাম: ${editing.title}\nমূল ধারণা: ${editing.idea}\nভিডিও ধরন: ${editing.style}\nপ্ল্যাটফর্ম: ${editing.platform}\nসময়: ${editing.targetDurationSec} সেকেন্ড`,
+        context: charList.map((character) => `${character.name}: ${character.visualDescription}; পোশাক: ${character.clothing}; continuity: ${character.continuityNotes}`).join("\n"),
+      }});
+      if (result.ok) setAiOutput(result.reply);
+      else setAiError(result.message);
+    } catch {
+      setAiError("AI স্ক্রিপ্ট তৈরি করা যায়নি। সংযোগ পরীক্ষা করুন।");
+    } finally {
+      setAiBusy(false);
+    }
+  }
 
   function openEditor(s: Script) {
     setEditing(s);

@@ -428,7 +428,16 @@ function PlanView({ project }: { project: Project }) {
         </div>
       </Section>
 
-      <Section title="AI-চালিত মাস্টার পরিকল্পনা" description="সংরক্ষিত ব্রিফ ও বর্তমান স্ট্যাটাস দেখে AI এজেন্টদের কাজ ভাগ করে বিস্তারিত পরিকল্পনা তৈরি করবে.">\n\n      <section aria-labelledby="plan-heading" className="space-y-3">
+      <Section title="AI-চালিত মাস্টার পরিকল্পনা" description="সংরক্ষিত ব্রিফ ও বর্তমান স্ট্যাটাস দেখে AI এজেন্টদের কাজ ভাগ করে বিস্তারিত পরিকল্পনা তৈরি করবে।">
+        <Button type="button" onClick={generateAiPlan} disabled={!textConfigured || !brief || aiBusy}>
+          {aiBusy ? <Loader2 className="animate-spin" /> : <Wand2 />} {aiBusy ? "পরিকল্পনা তৈরি হচ্ছে…" : "AI দিয়ে কাজ ভাগ করো"}
+        </Button>
+        {aiError && <p role="alert" className="mt-3 text-sm text-destructive">{aiError}</p>}
+        {aiPlan && <Textarea className="mt-3 min-h-72" value={aiPlan} readOnly aria-label="AI মাস্টার পরিকল্পনা" />}
+        <p className="mt-2 text-xs text-muted-foreground">AI পরিকল্পনা তৈরি হলেই কোনো কাজ স্বয়ংক্রিয়ভাবে সম্পন্ন হয় না। প্রতিটি মিডিয়া আউটপুট আলাদাভাবে তৈরি ও পর্যালোচনা করতে হবে।</p>
+      </Section>
+
+      <section aria-labelledby="plan-heading" className="space-y-3">
         <div>
           <h2 id="plan-heading" className="text-lg font-semibold text-foreground">
             কাজের পরিকল্পনা — {toBnDigits(plan.length)}টি ধাপ

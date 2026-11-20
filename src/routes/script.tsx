@@ -3,6 +3,7 @@ import { Download, FilePlus2, Loader2, Pencil, ScrollText, Wand2 } from "lucide-
 import { useState } from "react";
 
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
+import { AgentAssistPanel } from "@/components/agents/AgentAssistPanel";
 import { EmptyState } from "@/components/common/EmptyState";
 import { HydrationGate } from "@/components/common/HydrationGate";
 import { NotConnectedNotice } from "@/components/common/NotConnectedNotice";
@@ -98,10 +99,34 @@ function ScriptBody() {
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
       <div className="space-y-4">
-        <NotConnectedNotice title="AI স্ক্রিপ্ট জেনারেশন">
-          টেক্সট AI প্রোভাইডার যুক্ত না হওয়া পর্যন্ত এই এজেন্ট নিজে স্ক্রিপ্ট লেখে না। আপনি নিজে দৃশ্য লিখে
-          সংরক্ষণ করতে পারবেন; সংযোগের পরে এই খসড়াগুলোই AI-কে দেওয়া যাবে।
-        </NotConnectedNotice>
+        {!textConfigured && (
+          <NotConnectedNotice title="AI স্ক্রিপ্ট জেনারেশন">
+            Gemini সংযোগের জন্য সার্ভারে GEMINI_API_KEY secret সেট করুন। API key কখনো ব্রাউজারে বা GitHub-এ রাখবেন না।
+          </NotConnectedNotice>
+        )}
+        <Section title="AI স্ক্রিপ্ট সহায়তা" description="বর্তমান স্ক্রিপ্টের ধারণা ও চরিত্রের তথ্য ব্যবহার করে দৃশ্যভিত্তিক বাংলা খসড়া তৈরি করুন।">
+          <Button type="button" onClick={generateWithAi} disabled={!textConfigured || aiBusy || editing.idea.trim().length < 10}>
+            {aiBusy ? <Loader2 className="animate-spin" /> : <Wand2 />}
+            {aiBusy ? "স্ক্রিপ্ট তৈরি হচ্ছে…" : "AI দিয়ে স্ক্রিপ্ট তৈরি"}
+          </Button>
+          {aiError && <p role="alert" className="mt-3 text-sm text-destructive">{aiError}</p>}
+          {aiOutput && (
+            <div className="mt-3 space-y-2">
+              <Textarea value={aiOutput} readOnly rows={12} aria-label="AI তৈরি করা স্ক্রিপ্ট" />
+              <Button type="button" variant="studio" size="sm" onClick={async () => {
+                if (await copyText(aiOutput)) toast.success("স্ক্রিপ্ট কপি হয়েছে");
+                else toast.error("কপি করা যায়নি");
+              }}>স্ক্রিপ্ট কপি করুন</Button>
+              <p className="text-xs text-muted-foreground">এটি AI-তৈরি খসড়া। সংরক্ষণের আগে পড়ে সম্পাদনা করুন এবং Script Editor-এ দৃশ্য যোগ করুন।</p>
+            </div>
+          )}
+        </Section>
+        <AgentAssistPanel
+          agentId="voice"
+          title="AI Voice Agent"
+          instruction={`এই ভিডিওর জন্য স্বাভাবিক বাংলা ভয়েসওভার ও সংলাপ প্রস্তুত করো। শিরোনাম: ${editing.title}। ধারণা: ${editing.idea}। স্ক্রিপ্ট খসড়া: ${aiOutput || "এখনো AI স্ক্রিপ্ট তৈরি হয়নি"}। প্রতিটি দৃশ্যের জন্য speaker, dialogue, emotion, pause ও timing দাও।`}
+          context={charList.map((character) => `${character.name}: ${character.voiceNotes}`).join("\n")}
+        />
         {requestedId && !requested && (
           <p role="alert" className="rounded-lg border border-status-failed/40 bg-status-failed/10 p-3 text-sm text-foreground">
             অনুরোধ করা স্ক্রিপ্ট খসড়াটি পাওয়া যায়নি — হয়তো মুছে ফেলা হয়েছে। ডান দিকের তালিকা থেকে বাছুন বা নতুন লিখুন।

@@ -241,3 +241,11 @@ export function buildStagePlan(project: Project, ctx: PlanContext): StagePlanIte
     return { stage, ...item, nextAction: override ?? item.nextAction };
   });
 }
+
+const BN_TO_LATIN: Record<string, string> = { "০": "0", "১": "1", "২": "2", "৩": "3", "৪": "4", "৫": "5", "৬": "6", "৭": "7", "৮": "8", "৯": "9" };
+
+/** Accepts Bengali or Latin digits (Android Bengali keyboards type ০-৯). Returns NaN for anything else. */
+export function parseDurationInput(raw: string): number {
+  const latin = raw.trim().replace(/[০-৯]/g, (d) => BN_TO_LATIN[d] ?? d);
+  return /^\d{1,4}$/.test(latin) ? Number(latin) : Number.NaN;
+}

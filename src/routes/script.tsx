@@ -20,6 +20,9 @@ import { safeSave } from "@/lib/store/safe-save";
 import type { Script } from "@/lib/store/types";
 
 export const Route = createFileRoute("/script")({
+  // ?id=<scriptId> opens that saved draft (used by the Master Controller plan).
+  validateSearch: (search: Record<string, unknown>): { id?: string } =>
+    typeof search["id"] === "string" && search["id"] ? { id: search["id"] } : {},
   head: () => ({
     meta: [
       { title: "স্ক্রিপ্ট এজেন্ট — Master AI Studio" },
@@ -52,7 +55,9 @@ function ScriptBody() {
   const list = scripts.useAll();
   const charList = characters.useAll();
   const projectTitle = useProjectTitle();
-  const [editing, setEditing] = useState<Script>(() => emptyScript());
+  const { id: requestedId } = Route.useSearch();
+  const requested = requestedId ? scripts.get(requestedId) : undefined;
+  const [editing, setEditing] = useState<Script>(() => requested ?? emptyScript());
   const [editorKey, setEditorKey] = useState(0);
 
   function openEditor(s: Script) {
@@ -68,6 +73,16 @@ function ScriptBody() {
           টেক্সট AI প্রোভাইডার যুক্ত না হওয়া পর্যন্ত এই এজেন্ট নিজে স্ক্রিপ্ট লেখে না। আপনি নিজে দৃশ্য লিখে
           সংরক্ষণ করতে পারবেন; সংযোগের পরে এই খসড়াগুলোই AI-কে দেওয়া যাবে।
         </NotConnectedNotice>
+        {requestedId && !requested && (
+          <p role="alert" className="rounded-lg border border-status-failed/40 bg-status-failed/10 p-3 text-sm text-foreground">
+            অনুরোধ করা স্ক্রিপ্ট খসড়াটি পাওয়া যায়নি — হয়তো মুছে ফেলা হয়েছে। ডান দিকের তালিকা থেকে বাছুন বা নতুন লিখুন।
+          </p>
+        )}
+        {requested && editing.id === requested.id && requested.scenes.length === 0 && (
+          <p role="status" className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
+            মাস্টার কন্ট্রোলারের খসড়া খোলা হয়েছে। নিচে “দৃশ্য যোগ করুন” দিয়ে দৃশ্যগুলো নিজে লিখে সংরক্ষণ করুন।
+          </p>
+        )}
         <Section
           title={scripts.get(editing.id) ? "স্ক্রিপ্ট সম্পাদনা" : "নতুন স্ক্রিপ্ট"}
           actions={

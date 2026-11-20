@@ -8,12 +8,14 @@ import {
   ScrollText,
   Settings,
   UserRound,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 
 export interface NavItem {
   to:
     | "/"
+    | "/controller"
     | "/assistant"
     | "/script"
     | "/characters"
@@ -29,6 +31,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "ড্যাশবোর্ড", short: "হোম", icon: LayoutDashboard },
+  { to: "/controller", label: "মাস্টার কন্ট্রোলার", short: "কন্ট্রোলার", icon: Workflow },
   { to: "/assistant", label: "মিনি AI অ্যাসিস্ট্যান্ট", short: "অ্যাসিস্ট্যান্ট", icon: MessageSquareText },
   { to: "/script", label: "স্ক্রিপ্ট এজেন্ট", short: "স্ক্রিপ্ট", icon: ScrollText },
   { to: "/characters", label: "ক্যারেক্টার ক্রিয়েটর", short: "চরিত্র", icon: UserRound },
@@ -39,4 +42,4 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/settings", label: "সেটিংস", short: "সেটিংস", icon: Settings },
 ];
 
-export const BOTTOM_NAV: NavItem["to"][] = ["/", "/script", "/assistant", "/monitor"];
+export const BOTTOM_NAV: NavItem["to"][] = ["/", "/controller", "/script", "/monitor"];

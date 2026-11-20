@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnimationRouteImport } from './routes/animation'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as CharactersRouteImport } from './routes/characters'
+import { Route as ControllerRouteImport } from './routes/controller'
 import { Route as EditingRouteImport } from './routes/editing'
 import { Route as MonitorRouteImport } from './routes/monitor'
 import { Route as ScriptRouteImport } from './routes/script'
@@ -37,6 +38,11 @@ const AssistantRoute = AssistantRouteImport.update({
 const CharactersRoute = CharactersRouteImport.update({
   id: '/characters',
   path: '/characters',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ControllerRoute = ControllerRouteImport.update({
+  id: '/controller',
+  path: '/controller',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EditingRoute = EditingRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/animation': typeof AnimationRoute
   '/assistant': typeof AssistantRoute
   '/characters': typeof CharactersRoute
+  '/controller': typeof ControllerRoute
   '/editing': typeof EditingRoute
   '/monitor': typeof MonitorRoute
   '/script': typeof ScriptRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/animation': typeof AnimationRoute
   '/assistant': typeof AssistantRoute
   '/characters': typeof CharactersRoute
+  '/controller': typeof ControllerRoute
   '/editing': typeof EditingRoute
   '/monitor': typeof MonitorRoute
   '/script': typeof ScriptRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/animation': typeof AnimationRoute
   '/assistant': typeof AssistantRoute
   '/characters': typeof CharactersRoute
+  '/controller': typeof ControllerRoute
   '/editing': typeof EditingRoute
   '/monitor': typeof MonitorRoute
   '/script': typeof ScriptRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/animation'
     | '/assistant'
     | '/characters'
+    | '/controller'
     | '/editing'
     | '/monitor'
     | '/script'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/animation'
     | '/assistant'
     | '/characters'
+    | '/controller'
     | '/editing'
     | '/monitor'
     | '/script'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/animation'
     | '/assistant'
     | '/characters'
+    | '/controller'
     | '/editing'
     | '/monitor'
     | '/script'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   AnimationRoute: typeof AnimationRoute
   AssistantRoute: typeof AssistantRoute
   CharactersRoute: typeof CharactersRoute
+  ControllerRoute: typeof ControllerRoute
   EditingRoute: typeof EditingRoute
   MonitorRoute: typeof MonitorRoute
   ScriptRoute: typeof ScriptRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/characters'
       fullPath: '/characters'
       preLoaderRoute: typeof CharactersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/controller': {
+      id: '/controller'
+      path: '/controller'
+      fullPath: '/controller'
+      preLoaderRoute: typeof ControllerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/editing': {
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnimationRoute: AnimationRoute,
   AssistantRoute: AssistantRoute,
   CharactersRoute: CharactersRoute,
+  ControllerRoute: ControllerRoute,
   EditingRoute: EditingRoute,
   MonitorRoute: MonitorRoute,
   ScriptRoute: ScriptRoute,

@@ -11,6 +11,7 @@ import {
   ScrollText,
   Sparkles,
   UserRound,
+  Workflow,
 } from "lucide-react";
 
 import { EmptyState } from "@/components/common/EmptyState";
@@ -59,7 +60,16 @@ function Dashboard() {
         icon={LayoutDashboard}
         title="ড্যাশবোর্ড"
         description="আপনার প্রজেক্ট, প্রোডাকশন স্টেজ আর সংযোগের আসল অবস্থা — কোনো বানানো ডেটা নেই।"
-        actions={<CreateProjectDialog />}
+        actions={
+          <>
+            <Button asChild variant="hero">
+              <Link to="/controller">
+                <Workflow /> কন্ট্রোলারে ব্রিফ দিন
+              </Link>
+            </Button>
+            <CreateProjectDialog triggerVariant="studio" />
+          </>
+        }
       />
       <HydrationGate rows={4}>
         <DashboardBody />
@@ -247,6 +257,11 @@ function SetupStatus() {
       </Section>
       <Section title="দ্রুত শুরু">
         <div className="grid gap-2">
+          <Button asChild variant="studio" className="justify-start">
+            <Link to="/controller">
+              <Workflow /> মাস্টার কন্ট্রোলারে ভিডিও ব্রিফ
+            </Link>
+          </Button>
           <Button asChild variant="studio" className="justify-start">
             <Link to="/script">
               <ScrollText /> নতুন স্ক্রিপ্ট লিখুন

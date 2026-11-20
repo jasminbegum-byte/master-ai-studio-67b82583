@@ -1,7 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Activity, ArrowLeft, Download, FolderOpen, Lock, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { Activity, ArrowLeft, Download, FolderOpen, Lock, Workflow } from "lucide-react";
+import { useState } from "react";
 
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -9,32 +8,17 @@ import { HydrationGate } from "@/components/common/HydrationGate";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Section } from "@/components/common/Section";
 import { JobPill, StagePill } from "@/components/common/StatusPill";
+import { ReviewCheckpoint, StageStatusControl } from "@/components/production/StageControls";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { downloadJson, safeFilename } from "@/lib/download";
+import { formatBnDate, PLATFORM_LABELS, STAGE_LABELS, toBnDigits } from "@/lib/domain/labels";
 import {
-  formatBnDate,
-  PLATFORM_LABELS,
-  STAGE_LABELS,
-  STAGE_STATUS_LABELS,
-  toBnDigits,
-} from "@/lib/domain/labels";
-import {
-  approveProject,
-  canApprove,
   completedStageCount,
   deriveJobStatus,
   JOB_STATUS_LABELS,
   PRODUCTION_STAGES,
-  revokeApproval,
-  STAGE_STATUSES,
-  updateStage,
   type JobStatus,
 } from "@/lib/domain/production";
 import {
@@ -46,7 +30,7 @@ import {
   thumbnails,
 } from "@/lib/store/collections";
 import { safeSave } from "@/lib/store/safe-save";
-import type { Project, StageKey, StageStatus } from "@/lib/store/types";
+import type { Project, StageKey } from "@/lib/store/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/monitor")({
@@ -176,10 +160,6 @@ function MonitorBody() {
   );
 }
 
-function save(next: Project, message?: string) {
-  return safeSave(() => projects.upsert(next), message);
-}
-
 function ProjectDetail({ project }: { project: Project }) {
   const navigate = Route.useNavigate();
   const status = deriveJobStatus(project);
@@ -225,6 +205,13 @@ function ProjectDetail({ project }: { project: Project }) {
           <JobPill status={status} className="text-sm" />
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
+          {project.brief && (
+            <Button asChild variant="studio" size="sm">
+              <Link to="/controller" search={{ project: project.id }}>
+                <Workflow /> কন্ট্রোলার প্ল্যান দেখুন
+              </Link>
+            </Button>
+          )}
           <Button variant="studio" size="sm" onClick={exportProject}>
             <Download /> JSON এক্সপোর্ট
           </Button>
@@ -248,7 +235,7 @@ function ProjectDetail({ project }: { project: Project }) {
         </ul>
       </Section>
 
-      <ReviewCheckpoint project={project} />
+      <ReviewCheckpoint project={project} idPrefix="mon" />
 
       <Section title="প্রকাশ (Publishing)">
         <div className="flex items-start gap-3 text-sm">
@@ -272,143 +259,18 @@ function StageRow({
   stage: StageKey;
   linkedCount?: number | undefined;
 }) {
-  const state = project.stages[stage];
-  const [note, setNote] = useState(state.note);
-  useEffect(() => setNote(state.note), [state.note]);
-
-  function setStatus(status: StageStatus) {
-    const wasApproved = project.approval.approved;
-    const next = updateStage(project, stage, { status }, nowIso());
-    if (save(next) && wasApproved && !next.approval.approved) {
-      toast.warning("স্টেজ বদলানোয় চূড়ান্ত অনুমোদন বাতিল হয়েছে", {
-        description: "আবার রিভিউ করে অনুমোদন দিন।",
-      });
-    }
-  }
-
   return (
     <li className="rounded-lg border border-border bg-surface p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <p className="font-medium text-foreground">{STAGE_LABELS[stage]}</p>
           {linkedCount !== undefined && (
             <span className="text-xs text-muted-foreground">({toBnDigits(linkedCount)}টি যুক্ত আইটেম)</span>
           )}
         </div>
-        <StagePill status={state.status} />
+        <StagePill status={project.stages[stage].status} />
       </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-[13rem_1fr]">
-        <div>
-          <Label htmlFor={`st-${stage}`} className="sr-only">
-            {STAGE_LABELS[stage]} স্ট্যাটাস
-          </Label>
-          <Select value={state.status} onValueChange={(v) => setStatus(v as StageStatus)}>
-            <SelectTrigger id={`st-${stage}`}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STAGE_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {STAGE_STATUS_LABELS[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label htmlFor={`note-${stage}`} className="sr-only">
-            {STAGE_LABELS[stage]} নোট
-          </Label>
-          <Input
-            id={`note-${stage}`}
-            value={note}
-            placeholder="নোট (যেমন: Flow-এ রেন্ডার বাকি)"
-            onChange={(e) => setNote(e.target.value)}
-            onBlur={() => {
-              if (note !== state.note) save(updateStage(project, stage, { note }, nowIso()), "নোট সংরক্ষিত");
-            }}
-          />
-        </div>
-      </div>
+      <StageStatusControl project={project} stage={stage} idPrefix="mon" />
     </li>
-  );
-}
-
-function ReviewCheckpoint({ project }: { project: Project }) {
-  const [confirmed, setConfirmed] = useState(false);
-  const [note, setNote] = useState(project.approval.note);
-  const allowed = canApprove(project);
-  const remaining = PRODUCTION_STAGES.filter((s) => project.stages[s].status !== "done");
-  const failed = PRODUCTION_STAGES.filter((s) => project.stages[s].status === "failed");
-
-  if (project.approval.approved) {
-    return (
-      <Section title="চূড়ান্ত রিভিউ ও অনুমোদন" className="border-status-done/40">
-        <div className="flex items-start gap-3">
-          <ShieldCheck className="mt-0.5 size-5 shrink-0 text-status-done" aria-hidden />
-          <div className="text-sm">
-            <p className="font-medium text-foreground">
-              আপনি অনুমোদন দিয়েছেন — {project.approval.approvedAt ? formatBnDate(project.approval.approvedAt) : ""}
-            </p>
-            {project.approval.note && <p className="mt-1 text-muted-foreground">নোট: {project.approval.note}</p>}
-            <p className="mt-1 text-muted-foreground">অনুমোদন মানে প্রকাশ নয়; প্রকাশের জন্য আলাদা নিশ্চিতকরণ লাগবে।</p>
-          </div>
-        </div>
-        <Button
-          variant="studio"
-          size="sm"
-          className="mt-4"
-          onClick={() => save(revokeApproval(project, nowIso()), "অনুমোদন প্রত্যাহার করা হয়েছে")}
-        >
-          অনুমোদন প্রত্যাহার
-        </Button>
-      </Section>
-    );
-  }
-
-  return (
-    <Section
-      title="চূড়ান্ত রিভিউ ও অনুমোদন"
-      description="সব প্রোডাকশন স্টেজ ‘সম্পন্ন’ হলে তবেই অনুমোদন দেওয়া যাবে।"
-    >
-      {!allowed ? (
-        <p className="text-sm text-muted-foreground">
-          {failed.length > 0
-            ? `ব্যর্থ স্টেজ ঠিক করুন: ${failed.map((s) => STAGE_LABELS[s]).join(", ")}`
-            : `বাকি স্টেজ: ${remaining.map((s) => STAGE_LABELS[s]).join(", ")}`}
-        </p>
-      ) : (
-        <form
-          className="space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!confirmed) return;
-            save(approveProject(project, note.trim(), nowIso()), "চূড়ান্ত অনুমোদন দেওয়া হয়েছে");
-          }}
-        >
-          <div className="flex items-start gap-3">
-            <Checkbox
-              id="review-confirm"
-              checked={confirmed}
-              onCheckedChange={(v) => setConfirmed(v === true)}
-              className="mt-1"
-            />
-            <Label htmlFor="review-confirm" className="text-sm leading-relaxed">
-              আমি স্ক্রিপ্ট, চরিত্র, অ্যানিমেশন, এডিটিং ও থাম্বনেইল নিজে দেখে নিশ্চিত হয়েছি।
-            </Label>
-          </div>
-          <Textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={2}
-            placeholder="রিভিউ নোট (ঐচ্ছিক)"
-            aria-label="রিভিউ নোট"
-          />
-          <Button type="submit" disabled={!confirmed}>
-            <ShieldCheck /> চূড়ান্ত অনুমোদন দিন
-          </Button>
-        </form>
-      )}
-    </Section>
   );
 }

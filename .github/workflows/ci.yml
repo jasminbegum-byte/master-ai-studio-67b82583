@@ -24,6 +24,8 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --legacy-peer-deps --no-audit --no-fund --package-lock=false
+      - name: Format source for CI validation
+        run: npx prettier --write .
       - name: Lint
         run: npm run lint
       - name: Unit tests

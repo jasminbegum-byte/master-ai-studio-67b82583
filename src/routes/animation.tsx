@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { CodePreview } from "@/components/animation/CodePreview";
+import { AgentAssistPanel } from "@/components/agents/AgentAssistPanel";
 import { ChipPicker } from "@/components/common/ChipPicker";
 import { ConfirmDelete } from "@/components/common/ConfirmDelete";
 import { EmptyState } from "@/components/common/EmptyState";

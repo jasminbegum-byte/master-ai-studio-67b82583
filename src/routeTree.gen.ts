@@ -15,6 +15,7 @@ import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as CharactersRouteImport } from './routes/characters'
 import { Route as ControllerRouteImport } from './routes/controller'
 import { Route as EditingRouteImport } from './routes/editing'
+import { Route as EditorAppsRouteImport } from './routes/editor-apps'
 import { Route as MonitorRouteImport } from './routes/monitor'
 import { Route as ScriptRouteImport } from './routes/script'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -50,6 +51,11 @@ const EditingRoute = EditingRouteImport.update({
   path: '/editing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EditorAppsRoute = EditorAppsRouteImport.update({
+  id: '/editor-apps',
+  path: '/editor-apps',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MonitorRoute = MonitorRouteImport.update({
   id: '/monitor',
   path: '/monitor',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/characters': typeof CharactersRoute
   '/controller': typeof ControllerRoute
   '/editing': typeof EditingRoute
+  '/editor-apps': typeof EditorAppsRoute
   '/monitor': typeof MonitorRoute
   '/script': typeof ScriptRoute
   '/settings': typeof SettingsRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/characters': typeof CharactersRoute
   '/controller': typeof ControllerRoute
   '/editing': typeof EditingRoute
+  '/editor-apps': typeof EditorAppsRoute
   '/monitor': typeof MonitorRoute
   '/script': typeof ScriptRoute
   '/settings': typeof SettingsRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/characters': typeof CharactersRoute
   '/controller': typeof ControllerRoute
   '/editing': typeof EditingRoute
+  '/editor-apps': typeof EditorAppsRoute
   '/monitor': typeof MonitorRoute
   '/script': typeof ScriptRoute
   '/settings': typeof SettingsRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/characters'
     | '/controller'
     | '/editing'
+    | '/editor-apps'
     | '/monitor'
     | '/script'
     | '/settings'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/characters'
     | '/controller'
     | '/editing'
+    | '/editor-apps'
     | '/monitor'
     | '/script'
     | '/settings'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/characters'
     | '/controller'
     | '/editing'
+    | '/editor-apps'
     | '/monitor'
     | '/script'
     | '/settings'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   CharactersRoute: typeof CharactersRoute
   ControllerRoute: typeof ControllerRoute
   EditingRoute: typeof EditingRoute
+  EditorAppsRoute: typeof EditorAppsRoute
   MonitorRoute: typeof MonitorRoute
   ScriptRoute: typeof ScriptRoute
   SettingsRoute: typeof SettingsRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EditingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/editor-apps': {
+      id: '/editor-apps'
+      path: '/editor-apps'
+      fullPath: '/editor-apps'
+      preLoaderRoute: typeof EditorAppsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/monitor': {
       id: '/monitor'
       path: '/monitor'
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   CharactersRoute: CharactersRoute,
   ControllerRoute: ControllerRoute,
   EditingRoute: EditingRoute,
+  EditorAppsRoute: EditorAppsRoute,
   MonitorRoute: MonitorRoute,
   ScriptRoute: ScriptRoute,
   SettingsRoute: SettingsRoute,

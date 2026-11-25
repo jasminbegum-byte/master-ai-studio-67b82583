@@ -72,14 +72,14 @@ function Body() {
   }
   function prefer(m: WorkspaceMode, id: string | null) {
     const r = setPreferred(getPrefs(), getProfiles(), m, id);
-    if (!r.ok) return toast.error(r.error);
+    if (!r.ok) { toast.error(r.error); return; }
     safeSave(() => savePrefs(r.prefs), "পছন্দের এডিটর বদলানো হয়েছে");
   }
   const f = (k: keyof ProfileInput) => ({ id: `ep-${k}`, value: form[k], onChange: (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value }), "aria-invalid": !!errors[k] });
 
   return (
     <div className="space-y-5">
-      <Section title="পছন্দের এডিটর" description={mode ? `এখন: ${MODE_LABELS[mode]}` : undefined}>
+      <Section title="পছন্দের এডিটর" {...(mode ? { description: `এখন: ${MODE_LABELS[mode]}` } : {})}>
         <p className="text-sm text-muted-foreground">মোবাইল: {profiles.find((p) => p.id === prefs.mobile)?.name ?? "নেই"} · কম্পিউটার: {profiles.find((p) => p.id === prefs.computer)?.name ?? "নেই"}</p>
       </Section>
       <Section title="প্রোফাইল" actions={<Button variant="studio" size="sm" onClick={() => safeSave(restoreStarters, "শুরুর প্রোফাইল ফিরিয়ে আনা হয়েছে")}>শুরুর প্রোফাইল ফেরান</Button>}>
@@ -163,7 +163,7 @@ function Handoff({ mode }: { mode: WorkspaceMode }) {
         <Button variant="studio" disabled={!project} onClick={() => { const i = input(); if (i) downloadJson(buildHandoffBundle(i), `${name}-handoff.json`); }}><Download /> প্রজেক্ট ডেটা (JSON)</Button>
         <Button variant="studio" disabled={!project} onClick={() => {
           const s = scripts.getAll().find((x) => x.projectId === pid && x.scenes.some((sc) => sc.narration.trim()));
-          if (!s) return toast.error("এই প্রজেক্টের স্ক্রিপ্টে কোনো বর্ণনা নেই।");
+          if (!s) { toast.error("এই প্রজেক্টের স্ক্রিপ্টে কোনো বর্ণনা নেই।"); return; }
           downloadText(buildSrt(s.scenes), `${name}.srt`);
         }}><Download /> সাবটাইটেল (SRT)</Button>
       </div>

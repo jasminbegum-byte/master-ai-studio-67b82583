@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgentsRouteImport } from './routes/agents'
 import { Route as AnimationRouteImport } from './routes/animation'
 import { Route as AssistantRouteImport } from './routes/assistant'
 import { Route as CharactersRouteImport } from './routes/characters'
@@ -24,6 +25,11 @@ import { Route as ThumbnailRouteImport } from './routes/thumbnail'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgentsRoute = AgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnimationRoute = AnimationRouteImport.update({
@@ -79,6 +85,7 @@ const ThumbnailRoute = ThumbnailRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agents': typeof AgentsRoute
   '/animation': typeof AnimationRoute
   '/assistant': typeof AssistantRoute
   '/characters': typeof CharactersRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agents': typeof AgentsRoute
   '/animation': typeof AnimationRoute
   '/assistant': typeof AssistantRoute
   '/characters': typeof CharactersRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agents': typeof AgentsRoute
   '/animation': typeof AnimationRoute
   '/assistant': typeof AssistantRoute
   '/characters': typeof CharactersRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agents'
     | '/animation'
     | '/assistant'
     | '/characters'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agents'
     | '/animation'
     | '/assistant'
     | '/characters'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agents'
     | '/animation'
     | '/assistant'
     | '/characters'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgentsRoute: typeof AgentsRoute
   AnimationRoute: typeof AnimationRoute
   AssistantRoute: typeof AssistantRoute
   CharactersRoute: typeof CharactersRoute
@@ -180,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agents': {
+      id: '/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AgentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/animation': {
@@ -257,6 +277,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgentsRoute: AgentsRoute,
   AnimationRoute: AnimationRoute,
   AssistantRoute: AssistantRoute,
   CharactersRoute: CharactersRoute,

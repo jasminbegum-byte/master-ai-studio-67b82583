@@ -10,6 +10,7 @@ import {
   Settings,
   UserRound,
   Workflow,
+  Bot,
   type LucideIcon,
 } from "lucide-react";
 
@@ -17,6 +18,7 @@ export interface NavItem {
   to:
     | "/"
     | "/controller"
+    | "/agents"
     | "/assistant"
     | "/script"
     | "/characters"
@@ -34,6 +36,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "ড্যাশবোর্ড", short: "হোম", icon: LayoutDashboard },
   { to: "/controller", label: "মাস্টার কন্ট্রোলার", short: "কন্ট্রোলার", icon: Workflow },
+  { to: "/agents", label: "এজেন্ট সিস্টেম", short: "এজেন্ট", icon: Bot },
   { to: "/assistant", label: "মিনি AI অ্যাসিস্ট্যান্ট", short: "অ্যাসিস্ট্যান্ট", icon: MessageSquareText },
   { to: "/script", label: "স্ক্রিপ্ট এজেন্ট", short: "স্ক্রিপ্ট", icon: ScrollText },
   { to: "/characters", label: "ক্যারেক্টার ক্রিয়েটর", short: "চরিত্র", icon: UserRound },

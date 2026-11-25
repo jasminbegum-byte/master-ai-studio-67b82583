@@ -13,7 +13,13 @@ import type { ProviderSlotId } from "./provider-slots";
  */
 type TextAdapter = (messages: { role: "user" | "assistant"; content: string }[]) => Promise<string>;
 
-const adapters: { text?: TextAdapter } = {};
+/** Text adapter via Lovable AI Gateway; present only when the server key exists. */
+async function getTextAdapter(): Promise<TextAdapter | undefined> {
+  const { askText, textProviderConfigured } = await import("@/lib/agents/script-agent.server");
+  if (!textProviderConfigured()) return undefined;
+  return (messages) =>
+    askText("তুমি Master AI Studio-র সহকারী। বাংলায় সংক্ষেপে, সৎভাবে উত্তর দাও। না জানলে বলো জানো না।", messages);
+}
 
 export interface ProviderStatus {
   id: ProviderSlotId;
@@ -23,7 +29,8 @@ export interface ProviderStatus {
 export const getProviderStatus = createServerFn({ method: "GET" }).handler(
   async (): Promise<ProviderStatus[]> => {
     const ids: ProviderSlotId[] = ["text", "image", "video", "voice", "editing", "publishing"];
-    return ids.map((id) => ({ id, configured: id === "text" ? Boolean(adapters.text) : false }));
+    const text = Boolean(await getTextAdapter());
+    return ids.map((id) => ({ id, configured: id === "text" ? text : false }));
   },
 );
 
@@ -46,7 +53,7 @@ export type AskAssistantResult =
 export const askAssistant = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => askSchema.parse(input))
   .handler(async ({ data }): Promise<AskAssistantResult> => {
-    const adapter = adapters.text;
+    const adapter = await getTextAdapter();
     if (!adapter) {
       return {
         ok: false,

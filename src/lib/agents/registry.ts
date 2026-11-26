@@ -75,6 +75,9 @@ export function normalizeJob(job: AgentJob, now = Date.now()): AgentJob {
   if (base.status === "running" && base.startedAt && now - Date.parse(base.startedAt) > STALE_RUNNING_MS) {
     return { ...base, status: "failed", message: "কাজটি মাঝপথে বন্ধ হয়েছে (পেজ বন্ধ বা সংযোগ বিচ্ছিন্ন)। আবার চালান।" };
   }
+  if (base.status === "queued" && now - Date.parse(base.createdAt) > STALE_RUNNING_MS) {
+    return { ...base, status: "failed", message: "কাজটি লাইনে আটকে ছিল, কখনো চালু হয়নি। আবার চালান।" };
+  }
   return base;
 }
 
@@ -108,3 +111,15 @@ export function parseScriptOutput(raw: unknown): ScriptAgentOutput | null {
   });
   return scenes.length ? { title: r.title.trim().slice(0, 120), scenes: scenes.slice(0, 30) } : null;
 }
+
+/** Parent status is derived from children; never "completed" while any child is unfinished. */
+export function parentStatusFromChildren(children: AgentJob[]): AgentJobStatus {
+  if (children.length === 0) return "failed";
+  const has = (st: AgentJobStatus) => children.some((c) => c.status === st);
+  if (has("queued") || has("running")) return "running";
+  if (has("failed")) return "failed";
+  if (has("waiting_connection")) return "waiting_connection";
+  return "completed";
+}
+
+export const NO_EXECUTOR_REASON = "এই এজেন্টের কোনো বাস্তব এক্সিকিউটর/প্রোভাইডার সংযুক্ত নেই — কিছু তৈরি হয়নি।";

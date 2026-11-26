@@ -3,12 +3,21 @@ import { newId, nowIso } from "@/lib/store/collections";
 import type { Project, Script } from "@/lib/store/types";
 
 import type { RunAgentResult } from "./agents.functions";
-import { normalizeJob, type AgentId, type AgentJob, type ScriptAgentInput } from "./registry";
+import { NO_EXECUTOR_REASON, normalizeJob, parentStatusFromChildren, type AgentId, type AgentJob, type ScriptAgentInput } from "./registry";
 
 const KEY = "agentJobs";
 const EMPTY: AgentJob[] = [];
 const memo = new WeakMap<AgentJob[], AgentJob[]>();
-const norm = (l: AgentJob[]) => { if (!Array.isArray(l)) return EMPTY; let o = memo.get(l); if (!o) { o = l.map((j) => normalizeJob(j)); memo.set(l, o); } return o; };
+function deriveParents(list: AgentJob[]): AgentJob[] {
+  return list.map((j) => {
+    if (j.agentId !== "controller" || j.childJobIds.length === 0) return j;
+    const kids = list.filter((c) => c.parentJobId === j.id);
+    const status = parentStatusFromChildren(kids);
+    const done = kids.filter((k) => k.status === "completed").length;
+    return { ...j, status, message: `${kids.length}টি এজেন্ট: ${done}টি সম্পন্ন` + (status === "waiting_connection" ? "; বাকিগুলো সংযোগের অপেক্ষায়" : status === "running" ? "; কাজ চলছে" : status === "failed" ? "; কিছু ব্যর্থ" : "") };
+  });
+}
+const norm = (l: AgentJob[]) => { if (!Array.isArray(l)) return EMPTY; let o = memo.get(l); if (!o) { o = deriveParents(l.map((j) => normalizeJob(j))); memo.set(l, o); } return o; };
 
 export const getJobs = () => norm(readKey<AgentJob[]>(KEY, EMPTY));
 export const useJobs = () => norm(useStoredValue<AgentJob[]>(KEY, EMPTY));
@@ -49,23 +58,33 @@ export async function executeJob(id: string, run: Runner): Promise<void> {
 
 const DELEGATE: AgentId[] = ["script", "character", "animation", "voice", "editing", "thumbnail"];
 
-/** Master Controller: deterministic routing of a project brief to every agent. */
-export function delegateProject(project: Project): AgentJob {
-  const brief = project.brief;
-  const idea = [brief?.instruction ?? project.description ?? project.title, brief?.extraInstructions].filter(Boolean).join("\n");
-  const parent = makeJob("controller", { instruction: idea || project.title, projectId: project.id });
-  const children = DELEGATE.map((a) =>
-    makeJob(a, {
-      instruction: idea || project.title,
-      projectId: project.id,
-      parentJobId: parent.id,
-      scriptInput: a === "script" ? { idea: (idea || project.title).padEnd(10, " "), platform: project.platform, durationSec: brief?.targetDurationSec ?? 30, language: "bn", style: brief?.videoType ?? "" } : null,
-    }),
-  );
+export interface DelegationBrief { idea: string; platform: string; durationSec: number; style: string; projectId: string | null }
+
+/**
+ * Master Controller: deterministic routing (not AI). Agents without an executor are
+ * recorded as waiting_connection immediately; the Script child is executed via the server.
+ * Parent status is derived from children on every read.
+ */
+export function delegateBrief(b: DelegationBrief, run: Runner, scriptConnected: boolean): AgentJob {
+  const idea = b.idea.trim();
+  const parent = makeJob("controller", { instruction: idea, projectId: b.projectId });
   const at = nowIso();
-  const done: AgentJob = { ...parent, status: "completed", childJobIds: children.map((c) => c.id), message: `${children.length}টি এজেন্টে কাজ পাঠানো হয়েছে`, startedAt: at, finishedAt: at };
-  writeKey(KEY, [done, ...children, ...getJobs()]);
-  return done;
+  const children = DELEGATE.map((a) => {
+    const j = makeJob(a, { instruction: idea, projectId: b.projectId, parentJobId: parent.id, scriptInput: a === "script" ? { idea: idea.padEnd(10, " "), platform: b.platform, durationSec: b.durationSec, language: "bn", style: b.style } : null });
+    if (a === "script" && scriptConnected) return j;
+    return { ...j, status: "waiting_connection" as const, finishedAt: at, message: a === "script" ? "টেক্সট AI সার্ভারে কনফিগার করা নেই — স্ক্রিপ্ট তৈরি হয়নি।" : NO_EXECUTOR_REASON };
+  });
+  const p: AgentJob = { ...parent, status: "running", childJobIds: children.map((c) => c.id), startedAt: at };
+  writeKey(KEY, [p, ...children, ...readKey<AgentJob[]>(KEY, EMPTY)]);
+  const script = children.find((c) => c.agentId === "script" && c.status === "queued");
+  if (script) void executeJob(script.id, run);
+  return p;
+}
+
+export function delegateProject(project: Project, run: Runner, scriptConnected: boolean): AgentJob {
+  const brief = project.brief;
+  const idea = [brief?.instruction ?? project.description ?? project.title, brief?.extraInstructions].filter(Boolean).join("\n") || project.title;
+  return delegateBrief({ idea, platform: project.platform, durationSec: brief?.targetDurationSec ?? 30, style: brief?.videoType ?? "", projectId: project.id }, run, scriptConnected);
 }
 
 /** Turn a completed script job into an editable Script draft (existing model). */

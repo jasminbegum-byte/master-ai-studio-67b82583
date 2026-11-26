@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Bot } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { AgentStatusPill } from "@/components/agents/AgentStatusPill";
 import { HydrationGate } from "@/components/common/HydrationGate";
@@ -9,8 +9,8 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { Section } from "@/components/common/Section";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { runAgent } from "@/lib/agents/agents.functions";
-import { executeJob, makeJob, upsertJob, useJobs } from "@/lib/agents/jobs";
+import { getAgentConnections, runAgent } from "@/lib/agents/agents.functions";
+import { delegateBrief, executeJob, makeJob, upsertJob, useJobs } from "@/lib/agents/jobs";
 import { activeAgentCount, AGENTS, latestStatus, validateScriptInput } from "@/lib/agents/registry";
 import { toBnDigits } from "@/lib/domain/labels";
 
@@ -38,6 +38,20 @@ function Body() {
   const run = useServerFn(runAgent);
   const [idea, setIdea] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const conns = useServerFn(getAgentConnections);
+  const [scriptConnected, setScriptConnected] = useState<boolean | null>(null);
+  useEffect(() => { conns().then((l) => setScriptConnected(l.some((c) => c.id === "script" && c.connected))).catch(() => setScriptConnected(false)); }, [conns]);
+  const [brief, setBrief] = useState("");
+  const [dur, setDur] = useState(30);
+  const [briefErr, setBriefErr] = useState<string | null>(null);
+  function delegate() {
+    const e = validateScriptInput({ idea: brief, platform: "facebook_reels", durationSec: dur, language: "bn", style: "" });
+    setBriefErr(e);
+    if (e || scriptConnected === null) return;
+    delegateBrief({ idea: brief, platform: "facebook_reels", durationSec: dur, style: "", projectId: null }, run, scriptConnected);
+    setBrief("");
+  }
+  const parents = jobs.filter((j) => j.agentId === "controller");
   function startScript() {
     const input = { idea, platform: "facebook_reels", durationSec: 30, language: "bn", style: "" };
     const e = validateScriptInput(input);
@@ -59,6 +73,34 @@ function Body() {
             </li>
           ))}
         </ul>
+      </Section>
+      <Section title="মাস্টার কন্ট্রোলার — ব্রিফ দিন">
+        <p className="mb-2 text-xs text-muted-foreground">নিয়মভিত্তিক ভাগ (AI নয়)। শুধু স্ক্রিপ্ট এজেন্ট সত্যিই চলে{scriptConnected === false ? " — কিন্তু টেক্সট AI এখন সংযুক্ত নয়" : ""}; বাকিরা "সংযোগের অপেক্ষায়" থাকবে।</p>
+        <Textarea value={brief} onChange={(e) => setBrief(e.target.value)} aria-label="প্রজেক্ট ব্রিফ" placeholder="প্রজেক্ট ব্রিফ লিখুন…" />
+        <label className="mt-2 flex items-center gap-2 text-sm">দৈর্ঘ্য (সেকেন্ড)
+          <input type="number" min={5} max={600} value={dur} onChange={(e) => setDur(Number(e.target.value))} className="w-24 rounded border border-border bg-surface px-2 py-1" />
+        </label>
+        {briefErr && <p className="mt-1 text-sm text-destructive">{briefErr}</p>}
+        <Button className="mt-2" onClick={delegate} disabled={scriptConnected === null}>{scriptConnected === null ? "সংযোগ যাচাই হচ্ছে…" : "এজেন্টদের কাজ দিন"}</Button>
+        {parents.length > 0 && (
+          <ul className="mt-3 space-y-3">
+            {parents.slice(0, 5).map((p) => (
+              <li key={p.id} className="rounded-lg border border-border p-3 text-sm">
+                <div className="flex justify-between gap-2"><span className="line-clamp-2">{p.instruction}</span><AgentStatusPill status={p.status} /></div>
+                <p className="text-xs text-muted-foreground">{p.message}</p>
+                <ul className="mt-2 space-y-1">
+                  {jobs.filter((c) => c.parentJobId === p.id).map((c) => (
+                    <li key={c.id} className="rounded border border-border/60 p-2">
+                      <div className="flex justify-between gap-2"><span>{AGENTS.find((a) => a.id === c.agentId)?.name}</span><AgentStatusPill status={c.status} /></div>
+                      {c.message && <p className="text-xs text-muted-foreground">{c.message}</p>}
+                      {c.scriptOutput && <p className="mt-1 text-xs">{c.scriptOutput.title} · {toBnDigits(c.scriptOutput.scenes.length)}টি দৃশ্য</p>}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
       <Section title="স্ক্রিপ্ট এজেন্টকে কাজ দিন">
         <Textarea value={idea} onChange={(e) => setIdea(e.target.value)} aria-label="আইডিয়া" placeholder="ভিডিও আইডিয়া লিখুন…" />
